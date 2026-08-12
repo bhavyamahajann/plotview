@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interactive Plot Layout — 200 Plots Site Plan</title>
+<meta name="description" content="Interactive SVG site plan with 200 plots: hover for plot number, size and status, click for full details, zoom and pan." />
+<style>
+  :root{
+    --bg:#faf9f6; --border:#dcd8cf; --card:#fff; --fg:#22261f; --muted:#6b7264;
+    --available:#f4f6e4; --sold:#e2a397; --reserved:#f0d79a; --hover:#a5e08a;
+    --outline:#5d6b58; --label:#2b3128;
+    --asphalt:#3d4148; --green:#3f6b40; --park:#6da55e; --park2:#5a8a4e;
+    --pool:#6fb6d8; --path:#c9bfa6; --clay:#b5674a; --courtblue:#2f6f9e;
+    --courtgreen:#3f8a5a; --roof:#8b5a3c; --roadlabel:#e6e3da; --marking:#c8c8bd;
+    --gate:#f2c14e; --gatelabel:#2b2b20; --accent:#2f6f3f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+  .wrap{max-width:1200px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  button{font:inherit;cursor:pointer;border:1px solid var(--border);background:var(--card);color:inherit;border-radius:8px;padding:7px 12px}
+  button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-left:auto}
+  .dot{display:inline-block;width:11px;height:11px;border-radius:3px;border:1px solid var(--outline);margin-right:5px;vertical-align:-1px}
+  #stage{position:relative;height:78vh;min-height:520px;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--bg);touch-action:none;user-select:none;cursor:grab}
+  #stage.grabbing{cursor:grabbing}
+  #pan{position:absolute;inset:0;transform-origin:0 0}
+  svg{width:100%;height:100%}
+  .plot rect{stroke:var(--outline);stroke-width:.8;transition:fill .12s}
+  .plot:hover rect{fill:var(--hover)!important}
+  .plot text{fill:var(--label);font-weight:600;pointer-events:none}
+  .plot{cursor:pointer}
+  .plot.dim{opacity:.25}
+  .plot.sel rect{stroke:var(--accent);stroke-width:3}
+  #tip{position:absolute;z-index:20;min-width:150px;transform:translate(-50%,calc(-100% - 12px));background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.14);pointer-events:none;display:none}
+  #tip b{display:block;font-size:14px}
+  #tip span{font-size:12px;color:var(--muted)}
+  #zoomctl{position:absolute;right:12px;top:12px;z-index:10;display:flex;flex-direction:column;gap:6px}
+  #zoomctl button{width:36px;height:36px;padding:0;font-size:17px;line-height:1}
+  #panel{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:var(--card);border-left:1px solid var(--border);box-shadow:-12px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .25s;z-index:50;overflow:auto;padding:20px}
+  #panel.open{transform:none}
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
+  #overlay.open{opacity:1;pointer-events:auto}
+  .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+  .cell{border:1px solid var(--border);border-radius:10px;padding:10px}
+  .cell p{margin:0}
+  .k{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+  .v{margin-top:4px;font-size:14px;font-weight:600}
+  .hero{width:100%;height:150px;border-radius:10px;object-fit:cover;background:linear-gradient(135deg,#6da55e,#3f6b40);display:block}
+  .actions{display:flex;gap:8px;margin-top:16px}
+  .actions button{flex:1;padding:10px}
+  .actions button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  #close{position:absolute;right:14px;top:14px;width:32px;height:32px;padding:0}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#22261f;color:#fff;padding:10px 16px;border-radius:10px;z-index:60;display:none;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Interactive Plot Layout</h1>
+  <p class="sub">200 plots · hover a plot for quick info, click for full details. Scroll to zoom, drag to pan.</p>
+  <div class="bar">
+    <button data-f="All" class="active">All</button>
+    <button data-f="Available">Available</button>
+    <button data-f="Reserved">Reserved</button>
+    <button data-f="Sold">Sold</button>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--available)"></i>Available</span>
+      <span><i class="dot" style="background:var(--reserved)"></i>Reserved</span>
+      <span><i class="dot" style="background:var(--sold)"></i>Sold</span>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="pan"></div>
+    <div id="tip"></div>
+    <div id="zoomctl">
+      <button id="zin" aria-label="Zoom in">+</button>
+      <button id="zout" aria-label="Zoom out">−</button>
+      <button id="zres" aria-label="Reset view">⟲</button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="panel" aria-hidden="true"><button id="close" aria-label="Close">✕</button><div id="panelBody"></div></div>
+<div id="toast"></div>
+
+<script>
+/* ---------- 1. DATA: plot geometry traced 1:1 from the sanctioned layout (907 x 1920) ---------- */
+const MAP_W = 907, MAP_H = 1920;
+const GEOMETRY = [{"n":1,"x":85,"y":1600,"w":41.5,"h":60},{"n":2,"x":126.5,"y":1600,"w":48,"h":60},{"n":3,"x":174.5,"y":1600,"w":48,"h":60},{"n":4,"x":222.5,"y":1600,"w":47.5,"h":60},{"n":5,"x":270,"y":1600,"w":48.5,"h":60},{"n":6,"x":318.5,"y":1600,"w":46.5,"h":60},{"n":7,"x":485,"y":1578,"w":36.5,"h":50},{"n":8,"x":521.5,"y":1578,"w":49,"h":50},{"n":9,"x":570.5,"y":1578,"w":48.5,"h":50},{"n":10,"x":619,"y":1578,"w":50.5,"h":50},{"n":11,"x":669.5,"y":1578,"w":53.5,"h":50},{"n":12,"x":723,"y":1578,"w":77,"h":50},{"n":13,"x":492,"y":1466.5,"w":73,"h":35.5},{"n":14,"x":492,"y":1425.5,"w":73,"h":41},{"n":15,"x":492,"y":1384,"w":73,"h":41.5},{"n":16,"x":492,"y":1342.5,"w":73,"h":41.5},{"n":17,"x":492,"y":1300,"w":73,"h":42.5},{"n":18,"x":492,"y":1258.5,"w":73,"h":41.5},{"n":19,"x":492,"y":1219,"w":73,"h":39.5},{"n":20,"x":492,"y":1185,"w":73,"h":34},{"n":21,"x":565,"y":1185,"w":75,"h":21.5},{"n":22,"x":565,"y":1206.5,"w":75,"h":29.5},{"n":23,"x":565,"y":1236,"w":75,"h":30},{"n":24,"x":565,"y":1266,"w":75,"h":32},{"n":25,"x":565,"y":1298,"w":75,"h":32.5},{"n":26,"x":565,"y":1330.5,"w":75,"h":33},{"n":27,"x":565,"y":1363.5,"w":75,"h":36},{"n":28,"x":565,"y":1399.5,"w":75,"h":36.5},{"n":29,"x":565,"y":1436,"w":75,"h":32.5},{"n":30,"x":565,"y":1468.5,"w":75,"h":33.5},{"n":31,"x":706,"y":1458.5,"w":69,"h":41.5},{"n":32,"x":706,"y":1418.5,"w":69,"h":40},{"n":33,"x":706,"y":1378,"w":69,"h":40.5},{"n":34,"x":706,"y":1338.5,"w":69,"h":39.5},{"n":35,"x":706,"y":1299.5,"w":69,"h":39},{"n":36,"x":706,"y":1261,"w":69,"h":38.5},{"n":37,"x":706,"y":1223.5,"w":69,"h":37.5},{"n":38,"x":706,"y":1185.5,"w":69,"h":38},{"n":39,"x":706,"y":1132.5,"w":69,"h":53},{"n":40,"x":288.5,"y":1485.5,"w":63.5,"h":34.5},{"n":41,"x":288.5,"y":1454,"w":63.5,"h":31.5},{"n":42,"x":288.5,"y":1423.5,"w":63.5,"h":30.5},{"n":43,"x":288.5,"y":1394,"w":63.5,"h":29.5},{"n":44,"x":288.5,"y":1370,"w":63.5,"h":24},{"n":45,"x":235,"y":1370,"w":53.5,"h":24},{"n":46,"x":235,"y":1394,"w":53.5,"h":29.5},{"n":47,"x":235,"y":1423.5,"w":53.5,"h":30.5},{"n":48,"x":235,"y":1454,"w":53.5,"h":31.5},{"n":49,"x":235,"y":1485.5,"w":53.5,"h":34.5},{"n":50,"x":100,"y":1485,"w":68,"h":35},{"n":51,"x":100,"y":1454,"w":68,"h":31},{"n":52,"x":100,"y":1422.5,"w":68,"h":31.5},{"n":53,"x":100,"y":1393,"w":68,"h":29.5},{"n":54,"x":100,"y":1370,"w":68,"h":23},{"n":55,"x":95,"y":1234.5,"w":33,"h":55.5},{"n":56,"x":128,"y":1234.5,"w":46.5,"h":55.5},{"n":57,"x":174.5,"y":1234.5,"w":46.5,"h":55.5},{"n":58,"x":221,"y":1234.5,"w":47,"h":55.5},{"n":59,"x":268,"y":1234.5,"w":47.5,"h":55.5},{"n":60,"x":315.5,"y":1234.5,"w":59.5,"h":55.5},{"n":61,"x":315.5,"y":1188,"w":59.5,"h":46.5},{"n":62,"x":268,"y":1188,"w":47.5,"h":46.5},{"n":63,"x":221,"y":1188,"w":47,"h":46.5},{"n":64,"x":174.5,"y":1188,"w":46.5,"h":46.5},{"n":65,"x":128,"y":1188,"w":46.5,"h":46.5},{"n":66,"x":95,"y":1188,"w":33,"h":46.5},{"n":67,"x":95,"y":1042,"w":40.5,"h":58},{"n":68,"x":135.5,"y":1042,"w":45.5,"h":58},{"n":69,"x":181,"y":1042,"w":46,"h":58},{"n":70,"x":227,"y":1042,"w":46,"h":58},{"n":71,"x":273,"y":1042,"w":46,"h":58},{"n":72,"x":319,"y":1042,"w":56,"h":58},{"n":73,"x":485,"y":1055,"w":40,"h":53},{"n":74,"x":525,"y":1055,"w":51.5,"h":53},{"n":75,"x":576.5,"y":1055,"w":55,"h":53},{"n":76,"x":631.5,"y":1055,"w":68.5,"h":53},{"n":77,"x":706,"y":1085,"w":69,"h":47.5},{"n":78,"x":665,"y":943,"w":83,"h":37},{"n":79,"x":576.5,"y":995,"w":63.5,"h":55},{"n":80,"x":525.5,"y":995,"w":51,"h":55},{"n":81,"x":485,"y":995,"w":40.5,"h":55},{"n":82,"x":319,"y":995,"w":56,"h":47},{"n":83,"x":273,"y":995,"w":46,"h":47},{"n":84,"x":227,"y":995,"w":46,"h":47},{"n":85,"x":181,"y":995,"w":46,"h":47},{"n":86,"x":135.5,"y":995,"w":45.5,"h":47},{"n":87,"x":95,"y":995,"w":40.5,"h":47},{"n":88,"x":100,"y":854,"w":43,"h":51},{"n":89,"x":143,"y":854,"w":44.5,"h":51},{"n":90,"x":187.5,"y":854,"w":45.5,"h":51},{"n":91,"x":233,"y":854,"w":45,"h":51},{"n":92,"x":278,"y":854,"w":44.5,"h":51},{"n":93,"x":322.5,"y":854,"w":52.5,"h":51},{"n":94,"x":322.5,"y":810,"w":52.5,"h":44},{"n":95,"x":278,"y":810,"w":44.5,"h":44},{"n":96,"x":233,"y":810,"w":45,"h":44},{"n":97,"x":187.5,"y":810,"w":45.5,"h":44},{"n":98,"x":143,"y":810,"w":44.5,"h":44},{"n":99,"x":100,"y":810,"w":43,"h":44},{"n":100,"x":490,"y":876,"w":68,"h":39},{"n":101,"x":490,"y":834.5,"w":68,"h":41.5},{"n":102,"x":490,"y":795.5,"w":68,"h":39},{"n":103,"x":490,"y":757,"w":68,"h":38.5},{"n":104,"x":490,"y":715.5,"w":68,"h":41.5},{"n":105,"x":490,"y":680,"w":68,"h":35.5},{"n":106,"x":558,"y":680,"w":72,"h":32},{"n":107,"x":558,"y":712,"w":72,"h":35.5},{"n":108,"x":558,"y":747.5,"w":72,"h":35},{"n":109,"x":558,"y":782.5,"w":72,"h":35.5},{"n":110,"x":558,"y":818,"w":72,"h":36},{"n":111,"x":558,"y":854,"w":72,"h":34.5},{"n":112,"x":558,"y":888.5,"w":72,"h":26.5},{"n":113,"x":665,"y":908,"w":83,"h":35},{"n":114,"x":665,"y":868,"w":83,"h":40},{"n":115,"x":665,"y":828,"w":83,"h":40},{"n":116,"x":665,"y":790,"w":83,"h":38},{"n":117,"x":665,"y":751,"w":83,"h":39},{"n":118,"x":665,"y":711,"w":83,"h":40},{"n":119,"x":665,"y":675,"w":83,"h":36},{"n":120,"x":472,"y":558.5,"w":43,"h":56.5},{"n":121,"x":515,"y":558.5,"w":44,"h":56.5},{"n":122,"x":559,"y":558.5,"w":41.5,"h":56.5},{"n":123,"x":600.5,"y":558.5,"w":42,"h":56.5},{"n":124,"x":642.5,"y":558.5,"w":45,"h":56.5},{"n":125,"x":687.5,"y":558.5,"w":54.5,"h":56.5},{"n":126,"x":687.5,"y":510,"w":54.5,"h":48.5},{"n":127,"x":642.5,"y":510,"w":45,"h":48.5},{"n":128,"x":600.5,"y":510,"w":42,"h":48.5},{"n":129,"x":559,"y":510,"w":41.5,"h":48.5},{"n":130,"x":515,"y":510,"w":44,"h":48.5},{"n":131,"x":472,"y":510,"w":43,"h":48.5},{"n":132,"x":319,"y":688,"w":91,"h":42},{"n":133,"x":319,"y":650,"w":91,"h":38},{"n":134,"x":319,"y":612.5,"w":91,"h":37.5},{"n":135,"x":319,"y":574.5,"w":91,"h":38},{"n":136,"x":319,"y":540,"w":91,"h":34.5},{"n":137,"x":323,"y":355.5,"w":87,"h":39.5},{"n":138,"x":323,"y":319.5,"w":87,"h":36},{"n":139,"x":323,"y":282.5,"w":87,"h":37},{"n":140,"x":323,"y":245,"w":87,"h":37.5},{"n":141,"x":323,"y":209,"w":87,"h":36},{"n":142,"x":323,"y":168,"w":87,"h":41},{"n":143,"x":260,"y":168,"w":63,"h":41},{"n":144,"x":260,"y":209,"w":63,"h":36},{"n":145,"x":260,"y":245,"w":63,"h":37.5},{"n":146,"x":260,"y":282.5,"w":63,"h":37},{"n":147,"x":260,"y":319.5,"w":63,"h":36},{"n":148,"x":260,"y":355.5,"w":63,"h":39.5},{"n":149,"x":260,"y":540,"w":59,"h":34.5},{"n":150,"x":260,"y":574.5,"w":59,"h":38},{"n":151,"x":260,"y":612.5,"w":59,"h":37.5},{"n":152,"x":260,"y":650,"w":59,"h":38},{"n":153,"x":260,"y":688,"w":59,"h":42},{"n":154,"x":128,"y":677,"w":77,"h":58},{"n":155,"x":128,"y":630,"w":77,"h":47},{"n":156,"x":128,"y":581.5,"w":77,"h":48.5},{"n":157,"x":128,"y":537,"w":77,"h":44.5},{"n":158,"x":128,"y":495.5,"w":77,"h":41.5},{"n":159,"x":128,"y":450,"w":77,"h":45.5},{"n":160,"x":128,"y":401,"w":77,"h":49},{"n":161,"x":128,"y":357,"w":77,"h":44},{"n":162,"x":128,"y":317.5,"w":77,"h":39.5},{"n":163,"x":128,"y":278,"w":77,"h":39.5},{"n":164,"x":128,"y":238,"w":77,"h":40},{"n":165,"x":128,"y":198.5,"w":77,"h":39.5},{"n":166,"x":128,"y":155,"w":77,"h":43.5},{"n":167,"x":125,"y":33,"w":34.5,"h":61},{"n":168,"x":159.5,"y":33,"w":38,"h":61},{"n":169,"x":197.5,"y":33,"w":33.5,"h":61},{"n":170,"x":231,"y":33,"w":31.5,"h":61},{"n":171,"x":262.5,"y":33,"w":30.5,"h":61},{"n":172,"x":293,"y":33,"w":30.5,"h":61},{"n":173,"x":323.5,"y":33,"w":45.5,"h":61},{"n":174,"x":478,"y":33,"w":38,"h":61},{"n":175,"x":516,"y":33,"w":39,"h":61},{"n":176,"x":555,"y":33,"w":39.5,"h":61},{"n":177,"x":594.5,"y":33,"w":42.5,"h":61},{"n":178,"x":637,"y":33,"w":42.5,"h":61},{"n":179,"x":679.5,"y":33,"w":45.5,"h":61},{"n":180,"x":663,"y":157,"w":79,"h":41},{"n":181,"x":663,"y":198,"w":79,"h":36.5},{"n":182,"x":663,"y":234.5,"w":79,"h":36},{"n":183,"x":663,"y":270.5,"w":79,"h":37},{"n":184,"x":663,"y":307.5,"w":79,"h":36.5},{"n":185,"x":663,"y":344,"w":79,"h":36.5},{"n":186,"x":663,"y":380.5,"w":79,"h":44.5},{"n":187,"x":534,"y":380.5,"w":86,"h":44.5},{"n":188,"x":534,"y":344,"w":86,"h":36.5},{"n":189,"x":534,"y":308,"w":86,"h":36},{"n":190,"x":534,"y":271.5,"w":86,"h":36.5},{"n":191,"x":534,"y":234.5,"w":86,"h":37},{"n":192,"x":534,"y":197.5,"w":86,"h":37},{"n":193,"x":534,"y":157,"w":86,"h":40.5},{"n":194,"x":472,"y":157,"w":62,"h":40.5},{"n":195,"x":472,"y":197.5,"w":62,"h":37},{"n":196,"x":472,"y":234.5,"w":62,"h":37},{"n":197,"x":472,"y":271.5,"w":62,"h":36.5},{"n":198,"x":472,"y":308,"w":62,"h":36},{"n":199,"x":472,"y":344,"w":62,"h":36.5},{"n":200,"x":472,"y":380.5,"w":62,"h":44.5}];
+
+/* ---------- 2. DATA MODEL (swap this for an API/JSON feed) ---------- */
+const FACINGS = ["East","West","North","South","North-East","South-West"];
+const SIZES = [150,167,200,225,250,300];
+const seeded = (n,s) => { const v = Math.sin(n*12.9898 + s*78.233)*43758.5453; return v - Math.floor(v); };
+const statusFor = n => { const r = seeded(n,3); return r<0.18 ? "Sold" : r<0.32 ? "Reserved" : "Available"; };
+const inr = n => "₹" + Number(n).toLocaleString("en-IN");
+
+const PLOTS = GEOMETRY.map(g => {
+  const yards = SIZES[Math.floor(seeded(g.n,1)*SIZES.length)] || 200;
+  const rate  = 16000 + Math.floor(seeded(g.n,2)*9)*500;
+  return {
+    id:g.n, plotNumber:String(g.n), size:yards+" Sq. Yards",
+    areaSqYards:yards, areaSqFt:Math.round(yards*9),
+    status:statusFor(g.n), price:yards*rate,
+    facing:FACINGS[Math.floor(seeded(g.n,4)*FACINGS.length)] || "East",
+    description:"Residential Plot",
+    x:g.x, y:g.y, w:g.w, h:g.h,
+    image:"" // put a real image URL here per plot
+  };
+});
+const FILL = { Available:"var(--available)", Sold:"var(--sold)", Reserved:"var(--reserved)" };
+
+/* ---------- 3. SVG MAP ---------- */
+const roadLabels = [[211,125],[552,123],[551,460],[204,952],[201,1146],[185,1334],[590,1543],[163,1557]];
+const svgNS = "http://www.w3.org/2000/svg";
+const base = `
+<path d="M118 16 H742 L760 700 L800 1300 L836 1620 L872 1884 Q450 1830 30 1884 L60 1620 L84 1300 L104 700 Z" fill="var(--green)"/>
+<path d="M126 24 H734 L750 700 L790 1300 L824 1616 L856 1874 Q450 1822 44 1874 L74 1616 L96 1300 L114 700 Z" fill="var(--asphalt)"/>
+<rect x="262" y="400" width="146" height="134" rx="6" fill="var(--park)"/>
+<ellipse cx="300" cy="432" rx="30" ry="20" fill="var(--park2)"/>
+<ellipse cx="368" cy="432" rx="30" ry="20" fill="var(--pool)"/>
+<path d="M268 500 Q335 470 402 500" fill="none" stroke="var(--path)" stroke-width="4"/>
+<rect x="640" y="990" width="128" height="58" rx="4" fill="var(--park)"/>
+<rect x="690" y="1000" width="44" height="34" rx="3" fill="var(--roof)"/>
+<rect x="78" y="1666" width="288" height="192" rx="8" fill="var(--park)"/>
+<rect x="96" y="1684" width="92" height="62" rx="4" fill="var(--courtblue)"/>
+<ellipse cx="252" cy="1770" rx="70" ry="58" fill="var(--path)"/>
+<ellipse cx="252" cy="1770" rx="40" ry="32" fill="var(--park2)"/>
+<rect x="470" y="1652" width="362" height="206" rx="8" fill="var(--clay)"/>
+<rect x="576" y="1672" width="238" height="166" rx="4" fill="var(--courtblue)"/>
+<rect x="596" y="1690" width="198" height="130" rx="2" fill="var(--courtgreen)"/>
+<ellipse cx="520" cy="1706" rx="40" ry="30" fill="var(--park2)"/>
+<ellipse cx="524" cy="1800" rx="30" ry="24" fill="var(--path)"/>
+<g fill="var(--roadlabel)" font-size="11" font-weight="700" letter-spacing="0.6" text-anchor="middle">
+  ${roadLabels.map(([x,y]) => `<text x="${x}" y="${y}">7.50 MTR ROAD</text>`).join("")}
+  <text x="430" y="880" transform="rotate(-90 430 880)">12.00 MTR CROSSOVER ROAD</text>
+  <text x="430" y="1866">PROPOSED STREET HIGHWAY</text>
+</g>
+<path d="M430 100 V1580" stroke="var(--marking)" stroke-width="2" stroke-dasharray="10 14" fill="none"/>
+<circle cx="430" cy="47" r="14" fill="var(--gate)"/>
+<text x="430" y="47" text-anchor="middle" dominant-baseline="central" fill="var(--gatelabel)" font-size="14" font-weight="700">B</text>
+<circle cx="430" cy="1712" r="14" fill="var(--gate)"/>
+<text x="430" y="1712" text-anchor="middle" dominant-baseline="central" fill="var(--gatelabel)" font-size="14" font-weight="700">A</text>
+<path d="M430 1780 V1740 l-7 12 h14 l-7 -12" fill="var(--gate)" stroke="var(--gate)" stroke-width="3"/>
+<text x="430" y="1800" text-anchor="middle" fill="var(--roadlabel)" font-size="11" font-weight="700">ENTRY</text>`;
+
+const plotSvg = PLOTS.map(p => {
+  const fs = Math.min(13, Math.max(7, Math.min(p.w,p.h)*0.42));
+  return `<g class="plot" data-id="${p.id}">
+    <rect x="${p.x+1}" y="${p.y+1}" width="${Math.max(p.w-2,1)}" height="${Math.max(p.h-2,1)}" rx="2" fill="${FILL[p.status]}"/>
+    <text x="${p.x+p.w/2}" y="${p.y+p.h/2}" text-anchor="middle" dominant-baseline="central" font-size="${fs}">${p.plotNumber}</text>
+  </g>`;
+}).join("");
+
+document.getElementById("pan").innerHTML =
+  `<svg viewBox="0 0 ${MAP_W} ${MAP_H}" preserveAspectRatio="xMidYMid meet" shape-rendering="geometricPrecision">${base}${plotSvg}</svg>`;
+
+/* ---------- 4. ZOOM + PAN ---------- */
+const stage = document.getElementById("stage"), panEl = document.getElementById("pan");
+let zoom = 1, ox = 0, oy = 0, drag = null, dragging = false;
+const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+const render = () => { panEl.style.transform = `translate(${ox}px,${oy}px) scale(${zoom})`; };
+function zoomAt(next, px, py){ const z = clamp(next,0.6,8), k = z/zoom; ox = px-(px-ox)*k; oy = py-(py-oy)*k; zoom = z; render(); }
+stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect();
+  zoomAt(zoom*Math.exp(-e.deltaY*0.0018), e.clientX-r.left, e.clientY-r.top); }, {passive:false});
+document.getElementById("zin").onclick  = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom*1.4,r.width/2,r.height/2); };
+document.getElementById("zout").onclick = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom/1.4,r.width/2,r.height/2); };
+document.getElementById("zres").onclick = () => { zoom=1; ox=0; oy=0; render(); };
+stage.addEventListener("pointerdown", e => { drag = {x:e.clientX,y:e.clientY,ox,oy}; });
+stage.addEventListener("pointermove", e => {
+  if(!drag) return;
+  const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
+  if(!dragging && Math.hypot(dx,dy) > 4){ dragging = true; stage.classList.add("grabbing"); }
+  ox = drag.ox+dx; oy = drag.oy+dy; render();
+});
+const endDrag = () => { drag = null; stage.classList.remove("grabbing"); setTimeout(()=>dragging=false,0); };
+stage.addEventListener("pointerup", endDrag);
+stage.addEventListener("pointerleave", () => { endDrag(); tip.style.display = "none"; });
+
+/* ---------- 5. HOVER TOOLTIP ---------- */
+const tip = document.getElementById("tip");
+stage.addEventListener("mousemove", e => {
+  const g = e.target.closest(".plot");
+  if(!g || dragging){ tip.style.display = "none"; return; }
+  const p = PLOTS.find(x => x.id == g.dataset.id), r = stage.getBoundingClientRect();
+  tip.innerHTML = `<b>Plot ${p.plotNumber}</b><span>${p.size}</span><span style="color:var(--fg);font-weight:600">${p.status}</span>`;
+  tip.style.left = (e.clientX-r.left)+"px"; tip.style.top = (e.clientY-r.top)+"px"; tip.style.display = "block";
+});
+
+/* ---------- 6. FILTERS ---------- */
+let filter = "All";
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+  filter = b.dataset.f;
+  document.querySelectorAll("[data-f]").forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".plot").forEach(g => {
+    const p = PLOTS.find(x => x.id == g.dataset.id);
+    g.classList.toggle("dim", filter !== "All" && p.status !== filter);
+  });
+});
+
+/* ---------- 7. DETAILS PANEL ---------- */
+const panel = document.getElementById("panel"), overlay = document.getElementById("overlay"), body = document.getElementById("panelBody");
+function openPlot(p){
+  document.querySelectorAll(".plot.sel").forEach(g => g.classList.remove("sel"));
+  document.querySelector(`.plot[data-id="${p.id}"]`).classList.add("sel");
+  body.innerHTML = `
+    <h2 style="margin:0 34px 12px 0;font-size:22px">Plot No. ${p.plotNumber}
+      <span class="badge" style="border-color:${FILL[p.status]};background:${FILL[p.status]}">${p.status}</span></h2>
+    ${p.image ? `<img class="hero" src="${p.image}" alt="Plot ${p.plotNumber} view">` : `<div class="hero"></div>`}
+    <div class="grid">
+      <div class="cell"><p class="k">Size</p><p class="v">${p.size}</p></div>
+      <div class="cell"><p class="k">Area</p><p class="v">${p.areaSqYards} Sq. Yd · ${p.areaSqFt.toLocaleString("en-IN")} Sq. Ft</p></div>
+      <div class="cell"><p class="k">Facing</p><p class="v">${p.facing} Facing</p></div>
+      <div class="cell"><p class="k">Price</p><p class="v">${inr(p.price)}</p></div>
+    </div>
+    <p class="k">Description</p>
+    <p style="margin:4px 0 0;font-size:14px;line-height:1.6">${p.description} in a gated layout with 7.50 mtr internal roads, landscaped park, clubhouse and sports courts. Clear title, ready for registration.</p>
+    <div class="actions">
+      <button class="primary" id="btnContact">Contact</button>
+      <button id="btnInquiry">Inquiry</button>
+    </div>`;
+  document.getElementById("btnContact").onclick = () => toast(`Our sales team will call you about Plot ${p.plotNumber}`);
+  document.getElementById("btnInquiry").onclick = () => toast(`Inquiry raised for Plot ${p.plotNumber}`);
+  panel.classList.add("open"); overlay.classList.add("open"); panel.setAttribute("aria-hidden","false");
+}
+const closePanel = () => { panel.classList.remove("open"); overlay.classList.remove("open"); panel.setAttribute("aria-hidden","true"); };
+document.getElementById("close").onclick = closePanel;
+overlay.onclick = closePanel;
+document.addEventListener("keydown", e => e.key === "Escape" && closePanel());
+stage.addEventListener("click", e => {
+  const g = e.target.closest(".plot");
+  if(g && !dragging) openPlot(PLOTS.find(x => x.id == g.dataset.id));
+});
+
+/* ---------- 8. TOAST ---------- */
+let tt;
+function toast(msg){ const t = document.getElementById("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(tt); tt = setTimeout(() => t.style.display = "none", 2600); }
+
+render();
+</script>
+</body>
+</html>
