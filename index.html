@@ -49,6 +49,9 @@
   #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
   #overlay.open{opacity:1;pointer-events:auto}
   .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;border:1px solid var(--border)}
+  .plc-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:999px;letter-spacing:.3px;text-transform:uppercase}
+  .plc-pill.plc-yes{background:#dff0d8;color:#2f6f3f;border:1px solid #b7dfb0}
+  .plc-pill.plc-no{background:#f6dede;color:#b23b3b;border:1px solid #edbcbc}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
   .cell{border:1px solid var(--border);border-radius:10px;padding:10px}
   .cell p{margin:0}
@@ -316,7 +319,7 @@ const PLOTS = GEOMETRY.map(g => {
     id:g.n, plotNumber:String(g.n),
     front:d.front, depth:d.depth,
     carpetArea:d.carpet, superArea:d.superArea,
-    plc:d.plc, status,
+    plc:d.plc, plcApplicable:(d.plc === "N.A." ? "No" : "Yes"), status,
     x:g.x, y:g.y, w:g.w, h:g.h
   };
 });
@@ -397,7 +400,7 @@ stage.addEventListener("mousemove", e => {
   tip.innerHTML = `<b>Plot ${p.plotNumber}</b>
     <span>Front: ${p.front} ft &nbsp;·&nbsp; Depth: ${p.depth} ft</span>
     <span>Carpet: ${p.carpetArea} Sq. Yd &nbsp;·&nbsp; Super: ${p.superArea} Sq. Yd</span>
-    <span>PLC: ${p.plc}</span>
+    <span>PLC: ${p.plc} &nbsp;·&nbsp; PLC Applicable: <b style="color:${p.plcApplicable==='Yes' ? 'var(--accent)':'#b23b3b'}">${p.plcApplicable}</b></span>
     <span style="color:var(--fg);font-weight:600">${STATUS_LABEL[p.status]}</span>`;
   tip.style.left = (e.clientX-r.left)+"px"; tip.style.top = (e.clientY-r.top)+"px"; tip.style.display = "block";
 });
@@ -430,7 +433,9 @@ function openPlot(p){
       <div class="cell"><p class="k">Carpet Area</p><p class="v">${p.carpetArea} Sq. Yd (Gaj)</p></div>
       <div class="cell"><p class="k">Super Area</p><p class="v">${p.superArea} Sq. Yd (Gaj)</p></div>
     </div>
-    <p class="k">PLC Applicable</p>
+    <p class="k" style="display:flex;align-items:center;gap:8px;margin-top:4px">PLC Applicable
+      <span class="plc-pill plc-${p.plcApplicable.toLowerCase()}">${p.plcApplicable}</span>
+    </p>
     <p style="margin:4px 0 0;font-size:14px;line-height:1.6;font-weight:600">${p.plc}</p>
     <div class="actions">
       <button class="primary" id="btnContact">Contact</button>
