@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Interactive Plot Layout — 200 Plots Site Plan</title>
+<title>Anandam-Exotica — 200 Plots Site Plan</title>
 <meta name="description" content="Interactive SVG site plan with 200 plots: hover for plot number, size and status, click for full details, zoom and pan." />
 <style>
   :root{
@@ -44,6 +44,15 @@
   #tip span{font-size:12px;color:var(--muted);display:block}
   #zoomctl{position:absolute;right:12px;top:12px;z-index:10;display:flex;flex-direction:column;gap:6px}
   #zoomctl button{width:36px;height:36px;padding:0;font-size:17px;line-height:1}
+  @media (max-width: 640px){
+    #stage{height:70vh;min-height:420px;border-radius:10px}
+    #zoomctl{right:8px;top:8px;gap:8px}
+    #zoomctl button{width:44px;height:44px;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .bar{gap:6px}
+    .bar button{padding:6px 10px;font-size:13px}
+    .legend{width:100%;margin-left:0;gap:10px;font-size:12px}
+    h1{font-size:21px}
+  }
   #panel{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:var(--card);border-left:1px solid var(--border);box-shadow:-12px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:transform .25s;z-index:50;overflow:auto;padding:20px}
   #panel.open{transform:none}
   #overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
@@ -67,7 +76,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Interactive Plot Layout</h1>
+  <h1>Anandam-Exotica</h1>
   <p class="sub">200 plots · hover a plot for quick info, click for full details. Scroll to zoom, drag to pan.</p>
   <div class="bar">
     <button data-f="All" class="active">All</button>
@@ -369,7 +378,7 @@ const plotSvg = PLOTS.map(p => {
 document.getElementById("pan").innerHTML =
   `<svg viewBox="0 0 ${MAP_W} ${MAP_H}" preserveAspectRatio="xMidYMid meet" shape-rendering="geometricPrecision">${base}${plotSvg}</svg>`;
 
-/* ---------- 4. ZOOM + PAN ---------- */
+/* ---------- 4. ZOOM + PAN (mouse wheel + drag + touch pinch-zoom) ---------- */
 const stage = document.getElementById("stage"), panEl = document.getElementById("pan");
 let zoom = 1, ox = 0, oy = 0, drag = null, dragging = false;
 const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
@@ -377,19 +386,74 @@ const render = () => { panEl.style.transform = `translate(${ox}px,${oy}px) scale
 function zoomAt(next, px, py){ const z = clamp(next,0.6,8), k = z/zoom; ox = px-(px-ox)*k; oy = py-(py-oy)*k; zoom = z; render(); }
 stage.addEventListener("wheel", e => { e.preventDefault(); const r = stage.getBoundingClientRect();
   zoomAt(zoom*Math.exp(-e.deltaY*0.0018), e.clientX-r.left, e.clientY-r.top); }, {passive:false});
-document.getElementById("zin").onclick  = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom*1.4,r.width/2,r.height/2); };
-document.getElementById("zout").onclick = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom/1.4,r.width/2,r.height/2); };
+document.getElementById("zin").onclick  = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom*1.5,r.width/2,r.height/2); };
+document.getElementById("zout").onclick = () => { const r=stage.getBoundingClientRect(); zoomAt(zoom/1.5,r.width/2,r.height/2); };
 document.getElementById("zres").onclick = () => { zoom=1; ox=0; oy=0; render(); };
-stage.addEventListener("pointerdown", e => { drag = {x:e.clientX,y:e.clientY,ox,oy}; });
+
+/* Multi-touch pointer tracking: 1 finger = pan, 2 fingers = pinch-zoom */
+const pointers = new Map();
+let pinch = null; // {startDist, startZoom, cx, cy}
+
+function pointDist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function pointMid(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+
+stage.addEventListener("pointerdown", e => {
+  stage.setPointerCapture && stage.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(pointers.size === 1){
+    drag = {x:e.clientX, y:e.clientY, ox, oy};
+  } else if(pointers.size === 2){
+    drag = null;
+    const pts = [...pointers.values()];
+    const r = stage.getBoundingClientRect();
+    pinch = { startDist: pointDist(pts[0],pts[1]), startZoom: zoom,
+      mid: { x: pointMid(pts[0],pts[1]).x - r.left, y: pointMid(pts[0],pts[1]).y - r.top } };
+  }
+});
 stage.addEventListener("pointermove", e => {
-  if(!drag) return;
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY});
+
+  if(pinch && pointers.size === 2){
+    const pts = [...pointers.values()];
+    const dist = pointDist(pts[0],pts[1]);
+    const next = clamp(pinch.startZoom * (dist/pinch.startDist), 0.6, 8);
+    zoomAt(next, pinch.mid.x, pinch.mid.y);
+    dragging = true;
+    return;
+  }
+  if(!drag || pointers.size !== 1) return;
   const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
   if(!dragging && Math.hypot(dx,dy) > 4){ dragging = true; stage.classList.add("grabbing"); }
   ox = drag.ox+dx; oy = drag.oy+dy; render();
 });
-const endDrag = () => { drag = null; stage.classList.remove("grabbing"); setTimeout(()=>dragging=false,0); };
+const endDrag = e => {
+  if(e && e.pointerId != null) pointers.delete(e.pointerId);
+  if(pointers.size < 2) pinch = null;
+  if(pointers.size === 1){
+    const [[,pt]] = pointers;
+    drag = {x:pt.x, y:pt.y, ox, oy};
+  } else if(pointers.size === 0){
+    drag = null;
+    stage.classList.remove("grabbing");
+    setTimeout(()=>dragging=false,0);
+  }
+};
 stage.addEventListener("pointerup", endDrag);
-stage.addEventListener("pointerleave", () => { endDrag(); tip.style.display = "none"; });
+stage.addEventListener("pointercancel", endDrag);
+stage.addEventListener("pointerleave", e => { endDrag(e); tip.style.display = "none"; });
+
+/* Double-tap / double-click to zoom in, centered on tap point */
+let lastTap = 0;
+stage.addEventListener("pointerup", e => {
+  if(pointers.size > 0) return;
+  const now = Date.now();
+  if(now - lastTap < 300){
+    const r = stage.getBoundingClientRect();
+    zoomAt(zoom < 3 ? zoom*1.8 : 1, e.clientX-r.left, e.clientY-r.top);
+  }
+  lastTap = now;
+});
 
 /* ---------- 5. HOVER TOOLTIP ---------- */
 const tip = document.getElementById("tip");
@@ -451,7 +515,32 @@ overlay.onclick = closePanel;
 document.addEventListener("keydown", e => e.key === "Escape" && closePanel());
 stage.addEventListener("click", e => {
   const g = e.target.closest(".plot");
-  if(g && !dragging) openPlot(PLOTS.find(x => x.id == g.dataset.id));
+  if(!g || dragging) return;
+  
+  const isMobile = window.innerWidth <= 768;
+  const p = PLOTS.find(x => x.id == g.dataset.id);
+  
+  if(isMobile) {
+    // Mobile: show tooltip on tap
+    const r = stage.getBoundingClientRect();
+    tip.innerHTML = `<b>Plot ${p.plotNumber}</b>
+      <span>Front: ${p.front} ft &nbsp;·&nbsp; Depth: ${p.depth} ft</span>
+      <span>Carpet: ${p.carpetArea} Sq. Yd &nbsp;·&nbsp; Super: ${p.superArea} Sq. Yd</span>
+      <span>PLC: ${p.plc} &nbsp;·&nbsp; PLC Applicable: <b style="color:${p.plcApplicable==='Yes' ? 'var(--accent)':'#b23b3b'}">${p.plcApplicable}</b></span>
+      <span style="color:var(--fg);font-weight:600">${STATUS_LABEL[p.status]}</span>`;
+    
+    const rect = g.getBoundingClientRect();
+    tip.style.left = (rect.left + rect.width/2 - r.left) + "px";
+    tip.style.top = (rect.top - r.top) + "px";
+    tip.style.display = "block";
+    tip.style.pointerEvents = "auto";
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => { tip.style.display = "none"; tip.style.pointerEvents = "none"; }, 3000);
+  } else {
+    // Desktop: open full panel
+    openPlot(p);
+  }
 });
 
 /* ---------- 8. TOAST ---------- */
