@@ -39,7 +39,7 @@
   .plot{cursor:pointer}
   .plot.dim{opacity:.25}
   .plot.sel rect{stroke:var(--accent);stroke-width:3}
-  #tip{position:absolute;z-index:20;min-width:150px;transform:translate(-50%,calc(-100% - 12px));background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;box-shadow:0 8px 24px rgba(0,0,0,.14);pointer-events:none;display:none}
+  #tip{position:absolute;z-index:20;min-width:190px;transform:translate(-50%,calc(-100% - 12px));background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 11px;box-shadow:0 8px 24px rgba(0,0,0,.14);pointer-events:none;display:none;line-height:1.5}
   #tip b{display:block;font-size:14px}
   #tip span{font-size:12px;color:var(--muted);display:block}
   #zoomctl{position:absolute;right:12px;top:12px;z-index:10;display:flex;flex-direction:column;gap:6px}
@@ -358,7 +358,7 @@ const base = `
 const plotSvg = PLOTS.map(p => {
   const fs = Math.min(13, Math.max(7, Math.min(p.w,p.h)*0.42));
   return `<g class="plot" data-id="${p.id}">
-    <rect x="${p.x+1}" y="${p.y+1}" width="${Math.max(p.w-2,1)}" height="${Math.max(p.h-2,1)}" rx="2" fill="${FILL[p.status]}"/>
+    <rect x="${p.x+1}" y="${p.y+1}" width="${Math.max(p.w-2,1)}" height="${Math.max(p.h-2,1)}" rx="2" fill="var(--available)" data-fill="${FILL[p.status]}"/>
     <text x="${p.x+p.w/2}" y="${p.y+p.h/2}" text-anchor="middle" dominant-baseline="central" font-size="${fs}">${p.plotNumber}</text>
   </g>`;
 }).join("");
@@ -394,7 +394,11 @@ stage.addEventListener("mousemove", e => {
   const g = e.target.closest(".plot");
   if(!g || dragging){ tip.style.display = "none"; return; }
   const p = PLOTS.find(x => x.id == g.dataset.id), r = stage.getBoundingClientRect();
-  tip.innerHTML = `<b>Plot ${p.plotNumber}</b><span>${p.superArea} Sq. Yd (Super)</span><span style="color:var(--fg);font-weight:600">${STATUS_LABEL[p.status]}</span>`;
+  tip.innerHTML = `<b>Plot ${p.plotNumber}</b>
+    <span>Front: ${p.front} ft &nbsp;·&nbsp; Depth: ${p.depth} ft</span>
+    <span>Carpet: ${p.carpetArea} Sq. Yd &nbsp;·&nbsp; Super: ${p.superArea} Sq. Yd</span>
+    <span>PLC: ${p.plc}</span>
+    <span style="color:var(--fg);font-weight:600">${STATUS_LABEL[p.status]}</span>`;
   tip.style.left = (e.clientX-r.left)+"px"; tip.style.top = (e.clientY-r.top)+"px"; tip.style.display = "block";
 });
 
@@ -405,8 +409,9 @@ document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
   document.querySelectorAll("[data-f]").forEach(x => x.classList.toggle("active", x === b));
   document.querySelectorAll(".plot").forEach(g => {
     const p = PLOTS.find(x => x.id == g.dataset.id);
-    const matches = filter === "All" ? true : (filter === "Sold" ? (p.status === "Sold" || p.status === "SoldPartner") : p.status === filter);
-    g.classList.toggle("dim", !matches);
+    const matches = filter === "All" ? false : (filter === "Sold" ? (p.status === "Sold" || p.status === "SoldPartner") : p.status === filter);
+    g.classList.toggle("dim", filter !== "All" && !matches);
+    g.querySelector("rect").setAttribute("fill", matches ? FILL[p.status] : "var(--available)");
   });
 });
 
