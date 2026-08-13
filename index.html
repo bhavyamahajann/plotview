@@ -27,7 +27,7 @@ header{padding:14px 16px;border-top:1px solid rgba(42,42,46,0.3);display:flex;fl
 .status-legend-float.visible{display:flex}
 .status-legend-float span{display:flex;align-items:center;gap:3px;white-space:nowrap}
 .status-legend-float i{display:inline-block;width:7px;height:7px;border-radius:50%}
-.mobile-title{position:fixed;top:0;left:0;right:0;background:rgba(11,11,12,0.95);backdrop-filter:blur(10px);padding:12px 16px;border-bottom:1px solid rgba(42,42,46,0.3);z-index:100;display:none}
+.mobile-title{position:fixed;top:0;left:0;right:0;background:transparent;backdrop-filter:none;padding:12px 16px;border-bottom:none;z-index:100;display:none}
 .mobile-title h1{font-size:15px;margin:0 0 8px 0;font-weight:600}
 .mobile-title .legend{display:flex;gap:10px;font-size:10px;color:var(--muted);flex-wrap:wrap}
 .mobile-title .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
@@ -400,7 +400,14 @@ svg.appendChild(frag);
 /* zoom + pan */
 const stage=document.getElementById('stage'), world=document.getElementById('world');
 let z=1,ox=0,oy=0,MIN=0.3,MAX=8;
-function fit(){const r=stage.getBoundingClientRect();z=Math.min(r.width/MAP_W,r.height/MAP_H);MIN=z*0.8;ox=(r.width-MAP_W*z)/2;oy=(r.height-MAP_H*z)/2;apply();}
+function fit(){
+  const r=stage.getBoundingClientRect();
+  z=Math.min(r.width/MAP_W,r.height/MAP_H);
+  MIN=z*0.8;
+  ox=(r.width-MAP_W*z)/2;
+  oy=(r.height-MAP_H*z)/2;
+  apply();
+}
 function apply(){world.style.transform='translate('+ox+'px,'+oy+'px) scale('+z+')';}
 function zoomAt(px,py,next){next=Math.min(MAX,Math.max(MIN,next));const k=next/z;ox=px-(px-ox)*k;oy=py-(py-oy)*k;z=next;apply();}
 stage.addEventListener('wheel',e=>{e.preventDefault();const r=stage.getBoundingClientRect();
@@ -455,6 +462,18 @@ ov.addEventListener('click',e=>{if(e.target===ov)close_();});
 addEventListener('keydown',e=>{if(e.key==='Escape')close_();});
 document.getElementById('base').complete?fit():document.getElementById('base').onload=fit;
 fit();
+// Mobile initial view - centered on main plot area
+// if(window.innerWidth <= 640) {
+//   setTimeout(() => {
+//     const r = stage.getBoundingClientRect();
+//     const centerX = 450; // Map center X coordinate
+//     const centerY = 900; // Map center Y coordinate
+//     z = 1.5; // Zoom level
+//     ox = r.width/2 - centerX * z;
+//     oy = r.height/2 - centerY * z;
+//     apply();
+//   }, 100);
+// }
 /* search */
 const searchInput=document.getElementById('search');
 const clearBtn=document.getElementById('clearSearch');
