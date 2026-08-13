@@ -79,17 +79,21 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 .row{display:flex;gap:10px;margin-top:18px}
 .btn{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;font-size:14px}
 .btn.p{background:var(--accent);border-color:var(--accent);color:#04202b;font-weight:600}
-@media(max-width:640px){#stage{height:100vh;padding-bottom:0;padding-top:70px}
+@media(max-width:640px){#stage{height:100vh;padding-bottom:0;padding-top:85px}
 header{display:none}
 .mobile-title{display:block}
-.floating-controls{display:flex!important;right:12px;bottom:12px;gap:10px;flex-direction:column-reverse}
-.control-row{flex-direction:row;gap:8px;justify-content:flex-end;flex-wrap:wrap}
-.floating-btn{width:44px;height:44px;font-size:16px}
-.search-floating{min-width:280px;padding:10px 14px;order:2}
-.toggle-floating{padding:8px 14px;order:1;flex-wrap:wrap;gap:8px}
-.toggle-floating span{font-size:11px}
-.status-legend-float{width:100%;margin-left:0;gap:6px;font-size:9px}
-.status-legend-float span{font-size:9px}
+.floating-controls{display:flex!important;right:12px;bottom:12px;gap:6px;flex-direction:row;align-items:center;flex-wrap:nowrap}
+.control-row{flex-direction:row;gap:6px;justify-content:flex-end;flex-wrap:nowrap;order:2}
+.floating-btn{width:36px;height:36px;font-size:14px}
+.search-floating{min-width:auto;width:140px;padding:8px 10px;order:1;flex-shrink:0}
+.search-floating span{font-size:13px}
+.search-floating input{font-size:11px}
+.toggle-floating{padding:6px 10px;order:3;flex-wrap:nowrap;gap:6px;flex-shrink:0}
+.toggle-floating span{font-size:10px}
+.toggle-switch{width:32px;height:18px}
+.toggle-slider{width:13px;height:13px;top:1.5px;left:1.5px}
+.toggle-switch.active .toggle-slider{transform:translateX(14px)}
+.status-legend-float{display:none!important}
 #world img{filter:contrast(1.15) saturate(1.1)}
 #world::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.3) 0%,transparent 15%,transparent 85%,rgba(0,0,0,0.3) 100%);pointer-events:none;z-index:1}
 svg{z-index:2}}
