@@ -7,18 +7,38 @@
 <meta name="description" content="Explore the township site plan. Click any plot for front, depth, carpet area, super area, PLC and status."/>
 <style>
 :root{--bg:#0b0b0c;--panel:#141416;--line:#2a2a2e;--txt:#f2f2f3;--muted:#9a9aa2;
---available:#22c55e;--booked:#f59e0b;--sold:#ef4444;--accent:#38bdf8}
+--available:#ffffff;--booked:#f59e0b;--sold:#ef4444;--accent:#38bdf8}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-header{padding:10px 14px;border-top:1px solid rgba(42,42,46,0.3);display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;background:rgba(11,11,12,0.95);backdrop-filter:blur(10px);position:fixed;bottom:0;left:0;right:0;z-index:100}
-h1{font-size:13px;margin:0;letter-spacing:.02em}
-.legend{display:flex;gap:10px;font-size:10px;color:var(--muted);flex-wrap:wrap}
+header{padding:14px 16px;border-top:1px solid rgba(42,42,46,0.3);display:flex;flex-direction:column;gap:12px;background:rgba(11,11,12,0.95);backdrop-filter:blur(10px);position:fixed;bottom:0;left:0;right:0;z-index:100}
+.header-top{display:flex;align-items:center;justify-content:space-between;width:100%}
+.header-bottom{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
+.floating-controls{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:12px;z-index:100;display:none}
+.control-row{display:flex;gap:12px;align-items:center}
+.floating-btn{background:rgba(30,30,34,0.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--txt);cursor:pointer;font-size:20px;transition:all 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.floating-btn:hover{background:rgba(40,40,44,1);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 25px rgba(0,0,0,0.6)}
+.floating-btn.active{background:var(--accent);color:#000}
+.search-floating{background:rgba(30,30,34,0.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:28px;padding:14px 20px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);min-width:280px}
+.search-floating input{background:transparent;border:none;color:var(--txt);font-size:14px;outline:none;flex:1}
+.search-floating input::placeholder{color:var(--muted)}
+.toggle-floating{background:rgba(30,30,34,0.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:28px;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.toggle-floating span{font-size:13px;color:var(--txt);font-weight:500;white-space:nowrap}
+.status-legend-float{display:none;font-size:10px;color:var(--muted);gap:8px;margin-left:6px;align-items:center}
+.status-legend-float.visible{display:flex}
+.status-legend-float span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+.status-legend-float i{display:inline-block;width:7px;height:7px;border-radius:50%}
+.mobile-title{position:fixed;top:0;left:0;right:0;background:rgba(11,11,12,0.95);backdrop-filter:blur(10px);padding:12px 16px;border-bottom:1px solid rgba(42,42,46,0.3);z-index:100;display:none}
+.mobile-title h1{font-size:15px;margin:0 0 8px 0;font-weight:600}
+.mobile-title .legend{display:flex;gap:10px;font-size:10px;color:var(--muted);flex-wrap:wrap}
+.mobile-title .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+h1{font-size:14px;margin:0;letter-spacing:.02em;font-weight:600}
+.legend{display:flex;gap:12px;font-size:10px;color:var(--muted);flex-wrap:wrap}
 .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
 .controls{display:flex;gap:4px}
 button.ctl{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;width:28px;height:28px;font-size:14px;cursor:pointer}
 button.ctl:hover{border-color:var(--accent)}
-.toggle-container{display:flex;align-items:center;gap:8px;padding:6px 10px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:10px;box-shadow:none}
-.toggle-label{font-size:11px;color:var(--txt);font-weight:500;user-select:none}
+.toggle-container{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(20,20,22,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:10px}
+.toggle-label{font-size:11px;color:var(--txt);font-weight:500;user-select:none;white-space:nowrap}
 .toggle-switch{position:relative;width:40px;height:22px;background:rgba(42,42,46,0.8);border-radius:11px;cursor:pointer;transition:background 0.3s ease;border:1px solid var(--line)}
 .toggle-switch.active{background:var(--accent);border-color:var(--accent)}
 .toggle-slider{position:absolute;top:2px;left:2px;width:16px;height:16px;background:white;border-radius:50%;transition:transform 0.3s ease;box-shadow:0 2px 4px rgba(0,0,0,0.3)}
@@ -27,8 +47,8 @@ button.ctl:hover{border-color:var(--accent)}
 .status-legend.visible{display:flex}
 .status-legend span{display:flex;align-items:center;gap:3px}
 .status-legend i{display:inline-block;width:7px;height:7px;border-radius:50%}
-.search-wrapper{position:relative;display:inline-block}
-#search{width:160px;appearance:none;-webkit-appearance:none;-moz-appearance:textfield;padding:8px 32px 8px 12px;border:2px solid rgba(56,189,248,0.3);border-radius:10px;background:linear-gradient(145deg,rgba(20,20,22,0.95),rgba(28,28,32,0.95));color:var(--txt);font-size:12px;box-shadow:0 4px 15px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1);transition:all 0.3s ease;outline:none}
+.search-wrapper{position:relative;flex:1;max-width:300px}
+#search{width:100%;appearance:none;-webkit-appearance:none;-moz-appearance:textfield;padding:8px 32px 8px 12px;border:2px solid rgba(56,189,248,0.3);border-radius:10px;background:linear-gradient(145deg,rgba(20,20,22,0.95),rgba(28,28,32,0.95));color:var(--txt);font-size:12px;box-shadow:0 4px 15px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.1);transition:all 0.3s ease;outline:none}
 #clearSearch{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#ef4444;width:22px;height:22px;border-radius:6px;cursor:pointer;font-size:13px;display:none;transition:all 0.2s ease}
 #search::-webkit-inner-spin-button,#search::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 #search:hover{border-color:rgba(56,189,248,0.6);box-shadow:0 6px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.15)}
@@ -59,41 +79,92 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 .row{display:flex;gap:10px;margin-top:18px}
 .btn{flex:1;padding:11px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--txt);cursor:pointer;font-size:14px}
 .btn.p{background:var(--accent);border-color:var(--accent);color:#04202b;font-weight:600}
-@media(max-width:640px){#stage{height:100vh}
-header{justify-content:center}
-.toggle-container{order:4;width:100%;justify-content:center}
-.status-legend{flex-wrap:wrap}}
+@media(max-width:640px){#stage{height:100vh;padding-bottom:0;padding-top:70px}
+header{display:none}
+.mobile-title{display:block}
+.floating-controls{display:flex!important;right:12px;bottom:12px;gap:10px;flex-direction:column-reverse}
+.control-row{flex-direction:row;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.floating-btn{width:44px;height:44px;font-size:16px}
+.search-floating{min-width:280px;padding:10px 14px;order:2}
+.toggle-floating{padding:8px 14px;order:1;flex-wrap:wrap;gap:8px}
+.toggle-floating span{font-size:11px}
+.status-legend-float{width:100%;margin-left:0;gap:6px;font-size:9px}
+.status-legend-float span{font-size:9px}
+#world img{filter:contrast(1.15) saturate(1.1)}
+#world::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.3) 0%,transparent 15%,transparent 85%,rgba(0,0,0,0.3) 100%);pointer-events:none;z-index:1}
+svg{z-index:2}}
+@media(min-width:641px){header{display:none}
+.floating-controls{display:flex!important}
+#stage{padding-bottom:0}}
 </style>
 </head>
 <body>
 <header>
+  <div class="header-top">
+    <h1>Anandam Exotica</h1>
+    <div class="legend">
+      <span><i style="background:var(--available)"></i>Available</span>
+      <span><i style="background:#ffff00"></i>Booked</span>
+      <span><i style="background:#a3e635"></i>Sold</span>
+    </div>
+  </div>
+  <div class="header-bottom">
+    <div class="search-wrapper">
+      <input type="number" id="search" placeholder="🔍 Search Plot..." min="1" max="200">
+      <button id="clearSearch" title="Clear search">✕</button>
+    </div>
+    <div class="toggle-container">
+      <span class="toggle-label">Show Plot Status</span>
+      <div class="toggle-switch" id="statusToggle">
+        <div class="toggle-slider"></div>
+      </div>
+      <div class="status-legend" id="statusLegend">
+        <span><i style="background:#ffffff"></i>Available</span>
+        <span><i style="background:#ffff00"></i>Reserved</span>
+        <span><i style="background:#a3e635"></i>Sold</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="ctl" id="zin" title="Zoom in">+</button>
+      <button class="ctl" id="zout" title="Zoom out">&minus;</button>
+      <button class="ctl" id="zres" title="Reset">&#8635;</button>
+    </div>
+  </div>
+</header>
+
+<!-- Floating Controls for Desktop -->
+<div class="floating-controls">
+  <div class="search-floating">
+    <span>🔍</span>
+    <input type="number" id="searchFloat" placeholder="Search Plot..." min="1" max="200">
+  </div>
+  <div class="control-row">
+    <div class="toggle-floating">
+      <span>Status</span>
+      <div class="toggle-switch" id="statusToggleFloat">
+        <div class="toggle-slider"></div>
+      </div>
+      <div class="status-legend-float" id="statusLegendFloat">
+        <span><i style="background:#ffffff"></i>Available</span>
+        <span><i style="background:#ffff00"></i>Reserved</span>
+        <span><i style="background:#a3e635"></i>Sold</span>
+      </div>
+    </div>
+    <button class="floating-btn" id="zinFloat" title="Zoom in">+</button>
+    <button class="floating-btn" id="zoutFloat" title="Zoom out">&minus;</button>
+    <button class="floating-btn" id="zresFloat" title="Reset">&#8635;</button>
+  </div>
+</div>
+
+<!-- Mobile Title Bar -->
+<div class="mobile-title">
   <h1>Anandam Exotica</h1>
   <div class="legend">
     <span><i style="background:var(--available)"></i>Available</span>
     <span><i style="background:#ffff00"></i>Booked</span>
     <span><i style="background:#a3e635"></i>Sold</span>
   </div>
-  <div class="toggle-container">
-    <span class="toggle-label">Show Plot Status</span>
-    <div class="toggle-switch" id="statusToggle">
-      <div class="toggle-slider"></div>
-    </div>
-    <div class="status-legend" id="statusLegend">
-      <span><i style="background:#ffffff"></i>Available</span>
-      <span><i style="background:#ffff00"></i>Reserved</span>
-      <span><i style="background:#a3e635"></i>Sold</span>
-    </div>
-  </div>
-  <div class="search-wrapper">
-    <input type="number" id="search" placeholder="🔍 Search Plot..." min="1" max="200">
-    <button id="clearSearch" title="Clear search">✕</button>
-  </div>
-  <div class="controls">
-    <button class="ctl" id="zin" title="Zoom in">+</button>
-    <button class="ctl" id="zout" title="Zoom out">&minus;</button>
-    <button class="ctl" id="zres" title="Reset">&#8635;</button>
-  </div>
-</header>
+</div>
 
 <div id="stage">
   <div id="world">
@@ -125,25 +196,25 @@ const PLOTS = [
   { id: 18, x: 490, y: 1265, w: 72, h: 40, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
   { id: 19, x: 489, y: 1223, w: 73, h: 40, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
   { id: 20, x: 489, y: 1180, w: 73, h: 41, front: 26.2464, depth: 39.37, carpet: 105.52, super: 183.3213, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
-  { id: 21, x: 564, y: 1180, w: 76, h: 27, front: 29.5272, depth: 32.81, carpet: 102.4, super: 177.9002, plc: "Yes", plcDetail: "CORNER", status: "sold", description: "Sold by Company" },
-  { id: 22, x: 564, y: 1209, w: 76, h: 28, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
-  { id: 23, x: 564, y: 1239, w: 77, h: 29, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
-  { id: 24, x: 564, y: 1270, w: 77, h: 29, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
-  { id: 25, x: 564, y: 1301, w: 78, h: 31, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
+  { id: 21, x: 564, y: 1180, w: 76, h: 27, front: 29.5272, depth: 32.81, carpet: 102.4, super: 177.9002, plc: "Yes", plcDetail: "CORNER", status: "available", description: "Available for Sale" },
+  { id: 22, x: 564, y: 1209, w: 76, h: 28, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
+  { id: 23, x: 564, y: 1239, w: 77, h: 29, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
+  { id: 24, x: 564, y: 1270, w: 77, h: 29, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
+  { id: 25, x: 564, y: 1301, w: 78, h: 31, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
   { id: 26, x: 565, y: 1334, w: 77, h: 33, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
   { id: 27, x: 565, y: 1369, w: 78, h: 32, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
   { id: 28, x: 565, y: 1403, w: 78, h: 34, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
   { id: 29, x: 565, y: 1438, w: 79, h: 33, front: 19.6848, depth: 32.81, carpet: 71.73, super: 124.6236, plc: "No", plcDetail: "N.A.", status: "booked", description: "Reserved by Company" },
-  { id: 30, x: 565, y: 1473, w: 79, h: 35, front: 26.2464, depth: 32.81, carpet: 90.44, super: 157.1296, plc: "Yes", plcDetail: "CORNER", status: "booked", description: "Reserved by Company" },
-  { id: 31, x: 707, y: 1466, w: 85, h: 51, front: 19.6848, depth: 35.76, carpet: 74.66, super: 129.7124, plc: "Yes", plcDetail: "CORNER", status: "booked", description: "Reserved by Company" },
+  { id: 30, x: 565, y: 1473, w: 79, h: 35, front: 26.2464, depth: 32.81, carpet: 90.44, super: 157.1296, plc: "Yes", plcDetail: "CORNER", status: "available", description: "Available for Sale" },
+  { id: 31, x: 707, y: 1466, w: 85, h: 51, front: 19.6848, depth: 35.76, carpet: 74.66, super: 129.7124, plc: "Yes", plcDetail: "CORNER", status: "available", description: "Available for Sale" },
   { id: 32, x: 706, y: 1425, w: 84, h: 39, front: 22.9656, depth: 33.99, carpet: 88.95, super: 154.5332, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
   { id: 33, x: 705, y: 1385, w: 83, h: 38, front: 22.9656, depth: 33.27, carpet: 85.57, super: 148.6552, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 34, x: 704, y: 1345, w: 82, h: 37, front: 22.9656, depth: 33, carpet: 81.53, super: 146.8481, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 35, x: 703, y: 1306, w: 82, h: 37, front: 22.9656, depth: 33.27, carpet: 83.86, super: 145.685, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 36, x: 702, y: 1267, w: 81, h: 37, front: 22.9656, depth: 32.74, carpet: 83.19, super: 144.5218, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 37, x: 701, y: 1229, w: 79, h: 36, front: 22.9656, depth: 32.48, carpet: 82.52, super: 143.3587, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 38, x: 700, y: 1192, w: 78, h: 34, front: 22.9656, depth: 32.22, carpet: 81.85, super: 142.1955, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
-  { id: 39, x: 699, y: 1154, w: 78, h: 36, front: 32.808, depth: 31.95, carpet: 115.79, super: 201.1632, plc: "No", plcDetail: "N.A.", status: "sold", description: "Sold by Company" },
+  { id: 34, x: 704, y: 1345, w: 82, h: 37, front: 22.9656, depth: 33, carpet: 81.53, super: 146.8481, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
+  { id: 35, x: 703, y: 1306, w: 82, h: 37, front: 22.9656, depth: 33.27, carpet: 83.86, super: 145.685, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
+  { id: 36, x: 702, y: 1267, w: 81, h: 37, front: 22.9656, depth: 32.74, carpet: 83.19, super: 144.5218, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
+  { id: 37, x: 701, y: 1229, w: 79, h: 36, front: 22.9656, depth: 32.48, carpet: 82.52, super: 143.3587, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
+  { id: 38, x: 700, y: 1192, w: 78, h: 34, front: 22.9656, depth: 32.22, carpet: 81.85, super: 142.1955, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
+  { id: 39, x: 699, y: 1154, w: 78, h: 36, front: 32.808, depth: 31.95, carpet: 115.79, super: 201.1632, plc: "No", plcDetail: "N.A.", status: "available", description: "Available for Sale" },
   { id: 40, x: 295, y: 1491, w: 70, h: 34, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
   { id: 41, x: 295, y: 1450, w: 69, h: 39, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
   { id: 42, x: 297, y: 1429, w: 69, h: 29, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
@@ -177,11 +248,11 @@ const PLOTS = [
   { id: 70, x: 232, y: 1046, w: 46, h: 68, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 71, x: 279, y: 1046, w: 45, h: 68, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 72, x: 326, y: 1046, w: 49, h: 69, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "available", description: "Available" },
-  { id: 73, x: 478, y: 1052, w: 53, h: 67, front: 27.8868, depth: 39.37, carpet: 112.69, super: 195.7836, plc: "Yes", plcDetail: "CORNER + ROAD", status: "available", description: "Available" },
+  { id: 73, x: 478, y: 1052, w: 53, h: 67, front: 27.8868, depth: 39.37, carpet: 112.69, super: 195.7836, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
   { id: 74, x: 533, y: 1052, w: 50, h: 67, front: 22.9656, depth: 39.37, carpet: 100.43, super: 174.473, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 75, x: 585, y: 1053, w: 54, h: 66, front: 22.9656, depth: 39.37, carpet: 100.43, super: 174.473, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 76, x: 641, y: 1054, w: 53, h: 66, front: 22.9656, depth: 39.37, carpet: 100.43, super: 174.473, plc: "Yes", plcDetail: "PARK", status: "available", description: "Available" },
-  { id: 77, x: 696, y: 1054, w: 79, h: 97, front: 54.1332, depth: 30.97, carpet: 188.18, super: 326.9292, plc: "Yes", plcDetail: "PARK", status: "available", description: "Available" },
+  { id: 77, x: 696, y: 1054, w: 79, h: 97, front: 54.1332, depth: 30.97, carpet: 188.18, super: 326.9292, plc: "Yes", plcDetail: "PARK", status: "booked", description: "Reserved by Company" },
   { id: 78, x: 677, y: 946, w: 79, h: 35, front: 37.07304, depth: 30.28, carpet: 83.22, super: 144.5841, plc: "Yes", plcDetail: "PARK", status: "available", description: "Available" },
   { id: 79, x: 584, y: 989, w: 56, h: 62, front: 22.9656, depth: 39.37, carpet: 100.43, super: 174.473, plc: "Yes", plcDetail: "PARK", status: "available", description: "Available" },
   { id: 80, x: 533, y: 989, w: 50, h: 61, front: 22.9656, depth: 39.37, carpet: 100.43, super: 174.473, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
@@ -206,7 +277,7 @@ const PLOTS = [
   { id: 99, x: 106, y: 801, w: 44, h: 55, front: 22.5391, depth: 39.37, carpet: 97.88, super: 170.0489, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 100, x: 494, y: 888, w: 61, h: 38, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
   { id: 101, x: 494, y: 849, w: 61, h: 37, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
-  { id: 102, x: 494, y: 807, w: 61, h: 40, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "sold", description: "Sold by Company" },
+  { id: 102, x: 494, y: 807, w: 61, h: 40, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "available", description: "Available for Sale" },
   { id: 103, x: 493, y: 766, w: 62, h: 39, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "available", description: "Available" },
   { id: 104, x: 493, y: 727, w: 61, h: 37, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "Yes", plcDetail: "ROAD", status: "booked", description: "Reserved by Company" },
   { id: 105, x: 493, y: 678, w: 61, h: 47, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
@@ -345,6 +416,10 @@ stage.addEventListener('pointermove',e=>{if(e.pointerType!=='touch'||!pts.has(e.
 document.getElementById('zin').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,z*1.35)};
 document.getElementById('zout').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,z/1.35)};
 document.getElementById('zres').onclick=fit;
+// Floating controls
+document.getElementById('zinFloat').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,z*1.35)};
+document.getElementById('zoutFloat').onclick=()=>{const r=stage.getBoundingClientRect();zoomAt(r.width/2,r.height/2,z/1.35)};
+document.getElementById('zresFloat').onclick=fit;
 addEventListener('resize',fit);
 
 /* tooltip */
@@ -379,9 +454,23 @@ fit();
 /* search */
 const searchInput=document.getElementById('search');
 const clearBtn=document.getElementById('clearSearch');
+const searchInputFloat=document.getElementById('searchFloat');
 searchInput.addEventListener('input',e=>{
   const val=e.target.value;
   clearBtn.style.display=val?'block':'none';
+  const num=+val;
+  if(num<1||num>200)return;
+  const p=PLOTS.find(plot=>plot.id===num);
+  if(!p||!p.x||!p.y)return;
+  const cx=p.x+p.w/2,cy=p.y+p.h/2;
+  ox=stage.offsetWidth/2-cx*2;
+  oy=stage.offsetHeight/2-cy*2;
+  z=2;
+  apply();
+  setTimeout(()=>open(p),300);
+});
+searchInputFloat.addEventListener('input',e=>{
+  const val=e.target.value;
   const num=+val;
   if(num<1||num>200)return;
   const p=PLOTS.find(plot=>plot.id===num);
@@ -401,12 +490,16 @@ clearBtn.addEventListener('click',()=>{
 });
 /* status toggle */
 const statusToggle=document.getElementById('statusToggle');
+const statusToggleFloat=document.getElementById('statusToggleFloat');
 const statusLegend=document.getElementById('statusLegend');
+const statusLegendFloat=document.getElementById('statusLegendFloat');
 let showStatus=false;
-statusToggle.addEventListener('click',()=>{
+function toggleStatus(){
   showStatus=!showStatus;
   statusToggle.classList.toggle('active');
+  statusToggleFloat.classList.toggle('active');
   statusLegend.classList.toggle('visible');
+  statusLegendFloat.classList.toggle('visible');
   console.log('Toggle:', showStatus);
   const rects=svg.querySelectorAll('rect');
   console.log('Plots Found:', rects.length);
@@ -436,7 +529,9 @@ statusToggle.addEventListener('click',()=>{
       r.style.strokeOpacity='1';
     }
   });
-});
+}
+statusToggle.addEventListener('click',toggleStatus);
+statusToggleFloat.addEventListener('click',toggleStatus);
 </script>
 </body>
 </html>
