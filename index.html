@@ -89,7 +89,15 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 }
 #ov.on #modal{transform:translateX(0);}
 @media(max-width:640px){
-  #modal{max-width:52vw;width:200px}
+  #modal{max-width:46vw;width:170px;padding:70px 10px 16px;overflow-y:auto;overflow-wrap:break-word}
+  #modal h2{font-size:16px;word-break:break-word}
+  .grid{grid-template-columns:1fr;gap:8px;margin:10px 0}
+  .cell{padding:6px 8px}
+  .cell span{font-size:9px}
+  .cell strong{font-size:12px;word-break:break-word}
+  .desc{font-size:11px;line-height:1.4}
+  .row{flex-direction:column;gap:6px}
+  .row .btn{width:100%;padding:8px;font-size:12px}
 }
 #modal h2{margin:0 0 4px;font-size:22px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
@@ -129,6 +137,10 @@ svg{z-index:2}}
       .row{flex-direction:column}
       .row .btn{width:100%}
     }
+    @media(max-width:640px){
+  #stage{transition:width .3s ease}
+  body.modal-open-mobile #stage{width:calc(100% - 46vw)}
+}
 </style>
 </head>
 <body>
@@ -492,8 +504,12 @@ function open(p){
   +'<div class="row"><button class="btn" id="cl">Close</button><a class="btn p" style="text-align:center;text-decoration:none;line-height:1.4" href="tel:+919999999999">Contact Sales</a></div>';
   ov.classList.add('on');hideTip();
   document.getElementById('cl').onclick=close_;
+  if(innerWidth<=640){document.body.classList.add('modal-open-mobile');fit();}
 }
-function close_(){ov.classList.remove('on');}
+function close_(){
+  ov.classList.remove('on');
+  if(innerWidth<=640){document.body.classList.remove('modal-open-mobile');fit();}
+}
 ov.addEventListener('click',e=>{if(e.target===ov)close_();});
 addEventListener('keydown',e=>{if(e.key==='Escape')close_();});
 document.getElementById('base').complete?fit():document.getElementById('base').onload=fit;
