@@ -111,14 +111,17 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 @media(max-width:640px){#stage{height:100vh;padding-bottom:0;padding-top:85px}
 header{display:none}
 .mobile-title{display:block}
-.floating-controls{display:flex!important;left:12px!important;right:auto!important;bottom:12px;gap:6px;flex-direction:row;align-items:center;flex-wrap:nowrap}
-.control-row{flex-direction:row;gap:6px;justify-content:flex-end;flex-wrap:nowrap;order:2}
-.floating-btn{width:36px;height:36px;font-size:14px}
-.search-floating{min-width:auto;width:140px;padding:8px 10px;order:1;flex-shrink:0}
-.search-floating span{font-size:13px}
-.search-floating input{font-size:11px}
-.toggle-floating{padding:6px 10px;order:3;flex-wrap:nowrap;gap:6px;flex-shrink:0}
-.toggle-floating span{font-size:10px}
+.floating-controls{display:flex!important;left:8px!important;right:8px!important;bottom:8px;gap:5px;flex-direction:row;align-items:center;flex-wrap:nowrap}
+.control-row{flex-direction:row;gap:5px;flex-wrap:nowrap;flex-shrink:0}
+.floating-btn{width:30px;height:30px;font-size:12px;flex-shrink:0}
+.search-floating{flex:1 1 auto;min-width:0;width:auto;padding:6px 8px;gap:4px}
+.search-floating span{font-size:12px;flex-shrink:0}
+.search-floating input{font-size:10px;min-width:0}
+.toggle-floating{padding:5px 6px;flex-shrink:0;gap:3px}
+.toggle-floating span{font-size:8px;white-space:nowrap}
+.toggle-switch{width:28px;height:16px}
+.toggle-slider{width:11px;height:11px;top:1.5px;left:1.5px}
+.toggle-switch.active .toggle-slider{transform:translateX(12px)}
 .toggle-switch{width:32px;height:18px}
 .toggle-slider{width:13px;height:13px;top:1.5px;left:1.5px}
 .toggle-switch.active .toggle-slider{transform:translateX(14px)}
