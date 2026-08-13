@@ -13,7 +13,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family
 header{padding:14px 16px;border-top:1px solid rgba(42,42,46,0.3);display:flex;flex-direction:column;gap:12px;background:rgba(11,11,12,0.95);backdrop-filter:blur(10px);position:fixed;bottom:0;left:0;right:0;z-index:100}
 .header-top{display:flex;align-items:center;justify-content:space-between;width:100%}
 .header-bottom{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
-.floating-controls{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:12px;z-index:100;display:none}
+.floating-controls{position:fixed;display:flex;flex-direction:column;gap:12px;z-index:100;display:none}
 .control-row{display:flex;gap:12px;align-items:center}
 .floating-btn{background:rgba(30,30,34,0.95);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;color:var(--txt);cursor:pointer;font-size:20px;transition:all 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
 .floating-btn:hover{background:rgba(40,40,44,1);border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 25px rgba(0,0,0,0.6)}
@@ -67,9 +67,30 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 #tip{position:fixed;pointer-events:none;z-index:20;background:rgba(20,20,22,.97);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.5;display:none;min-width:150px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 #tip b{font-size:13px}
 .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
-#ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:30;padding:16px}
-#ov.on{display:flex}
-#modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:440px;width:100%;padding:22px}
+#ov{position:fixed;inset:0;background:transparent;display:none;z-index:30;pointer-events:none}
+#ov.on{display:block}
+#modal{
+  position:fixed;
+  top:0;
+  right:0;
+  height:100%;
+  width:280px;
+  max-width:48vw;
+  background:var(--panel);
+  border-left:1px solid var(--line);
+  border-radius:0;
+  padding:80px 18px 22px;
+  overflow-y:auto;
+  box-shadow:-10px 0 30px rgba(0,0,0,.5);
+  transform:translateX(100%);
+  transition:transform .3s ease;
+  pointer-events:auto;
+  z-index:150;
+}
+#ov.on #modal{transform:translateX(0);}
+@media(max-width:640px){
+  #modal{max-width:52vw;width:200px}
+}
 #modal h2{margin:0 0 4px;font-size:22px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
 .cell{background:#1c1c20;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
@@ -82,7 +103,7 @@ svg rect.status-colored:hover{fill-opacity:0.85!important}
 @media(max-width:640px){#stage{height:100vh;padding-bottom:0;padding-top:85px}
 header{display:none}
 .mobile-title{display:block}
-.floating-controls{display:flex!important;right:12px;bottom:12px;gap:6px;flex-direction:row;align-items:center;flex-wrap:nowrap}
+.floating-controls{display:flex!important;left:12px!important;right:auto!important;bottom:12px;gap:6px;flex-direction:row;align-items:center;flex-wrap:nowrap}
 .control-row{flex-direction:row;gap:6px;justify-content:flex-end;flex-wrap:nowrap;order:2}
 .floating-btn{width:36px;height:36px;font-size:14px}
 .search-floating{min-width:auto;width:140px;padding:8px 10px;order:1;flex-shrink:0}
@@ -98,8 +119,16 @@ header{display:none}
 #world::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(to bottom,rgba(0,0,0,0.3) 0%,transparent 15%,transparent 85%,rgba(0,0,0,0.3) 100%);pointer-events:none;z-index:1}
 svg{z-index:2}}
 @media(min-width:641px){header{display:none}
-.floating-controls{display:flex!important}
+.floating-controls{display:flex!important;left:20px;bottom:20px}
 #stage{padding-bottom:0}}
+@media(max-width:640px){
+      .grid{grid-template-columns:1fr}
+      .cell{padding:7px 9px}
+      .cell strong{font-size:13px}
+      #modal h2{font-size:18px}
+      .row{flex-direction:column}
+      .row .btn{width:100%}
+    }
 </style>
 </head>
 <body>
@@ -441,7 +470,14 @@ svg.addEventListener('pointermove',e=>{const t=e.target.closest('rect');if(!t){h
   tip.innerHTML='<b>Plot '+p.id+'</b><br>'+n2(p.front)+' &times; '+n2(p.depth)+' m &middot; '+n2(p.super)+' sq.m<br><span class="dot" style="background:'+COL[p.status]+'"></span>'+LBL[p.status]+'<br>PLC: '+(p.plc==='Yes'?p.plcDetail:'N.A.');
   tip.style.display='block';
   const w=tip.offsetWidth,h=tip.offsetHeight;
-  tip.style.left=Math.min(e.clientX+14,innerWidth-w-8)+'px';
+  // Agar side panel khula hai, to tooltip uski left-edge se aage na jaaye
+  let maxRight = innerWidth - w - 8;
+  if(ov.classList.contains('on')){
+    const modalEl = document.getElementById('modal');
+    const modalRect = modalEl.getBoundingClientRect();
+    maxRight = Math.min(maxRight, modalRect.left - w - 14);
+  }
+  tip.style.left=Math.min(e.clientX+14,maxRight)+'px';
   tip.style.top=Math.max(8,e.clientY-h-12)+'px';});
 svg.addEventListener('pointerleave',hideTip);
 
