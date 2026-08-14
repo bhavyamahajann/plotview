@@ -287,7 +287,7 @@ const PLOTS = [
   { id: 58, x: 226, y: 1239, w: 46, h: 68, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 59, x: 274, y: 1239, w: 46, h: 68, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 60, x: 321, y: 1240, w: 50, h: 67, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
-  { id: 61, x: 322, y: 1177, w: 50, h: 61, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "sold", description: "Sold by Company" },
+  { id: 61, x: 322, y: 1177, w: 50, h: 61, front: 24.606, depth: 39.37, carpet: 98.35, super: 170.8589, plc: "Yes", plcDetail: "CORNER + ROAD", status: "available", description: "Available for Sale" },
   { id: 62, x: 275, y: 1176, w: 46, h: 61, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 63, x: 228, y: 1176, w: 46, h: 61, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
   { id: 64, x: 181, y: 1176, w: 46, h: 61, front: 24.606, depth: 39.37, carpet: 107.6, super: 186.9354, plc: "No", plcDetail: "N.A.", status: "available", description: "Available" },
@@ -433,8 +433,8 @@ const COL={available:'#3b82f6',booked:'#ef4444',sold:'#22c55e'};
 const LBL={available:'Available',booked:'Reserved',sold:'Sold'};
 const n2=v=>v;
 
-// Google Sheets Integration
-const SHEET_URL = 'YOUR_GOOGLE_SHEET_CSV_URL_HERE'; // Replace with your sheet URL
+// Google Sheets Integration (DISABLED - Enable when ready)
+const SHEET_URL = ''; // Add CSV URL here when ready
 
 // Function to fetch data from Google Sheet
 async function fetchSheetData() {
