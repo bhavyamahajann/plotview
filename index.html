@@ -209,8 +209,8 @@ svg{z-index:2}}
   <h1>Anandam Exotica</h1>
   <div class="legend">
     <span><i style="background:var(--available)"></i>Available</span>
-    <span><i style="background:#ffff00"></i>Booked</span>
-    <span><i style="background:#a3e635"></i>Sold</span>
+    <span><i style="background:#ef4444"></i>Reserved</span>
+    <span><i style="background:#22c55e"></i>Sold</span>
   </div>
 </div>
 
@@ -426,8 +426,8 @@ const PLOTS = [
   { id: 200, x: 480, y: 385, w: 64, h: 40, front: 27.26345, depth: 32.81, carpet: 89.98, super: 156.3195, plc: "Yes", plcDetail: "CORNER + ROAD + PARK", status: "available", description: "Available" },
 ];
 const MAP_W=907, MAP_H=1920;
-const COL={available:'#22c55e',booked:'#ffff00',sold:'#a3e635'};
-const LBL={available:'Available',booked:'Booked',sold:'Sold'};
+const COL={available:'#3b82f6',booked:'#ef4444',sold:'#22c55e'};
+const LBL={available:'Available',booked:'Reserved',sold:'Sold'};
 const n2=v=>v;
 const svg=document.getElementById('ov-svg');
 let frag=document.createDocumentFragment();
@@ -578,6 +578,27 @@ function toggleStatus(){
   statusToggleFloat.classList.toggle('active');
   statusLegend.classList.toggle('visible');
   statusLegendFloat.classList.toggle('visible');
+  
+  // Calculate counts
+  let availableCount = 0, bookedCount = 0, soldCount = 0;
+  PLOTS.forEach(p => {
+    if(p.status === 'available') availableCount++;
+    else if(p.status === 'booked') bookedCount++;
+    else if(p.status === 'sold') soldCount++;
+  });
+  
+  // Update legends with counts
+  statusLegend.innerHTML = `
+    <span><i style="background:#3b82f6"></i>Available (${availableCount})</span>
+    <span><i style="background:#ef4444"></i>Reserved (${bookedCount})</span>
+    <span><i style="background:#22c55e"></i>Sold (${soldCount})</span>
+  `;
+  statusLegendFloat.innerHTML = `
+    <span><i style="background:#3b82f6"></i>Available (${availableCount})</span>
+    <span><i style="background:#ef4444"></i>Reserved (${bookedCount})</span>
+    <span><i style="background:#22c55e"></i>Sold (${soldCount})</span>
+  `;
+  
   console.log('Toggle:', showStatus);
   const rects=svg.querySelectorAll('rect');
   console.log('Plots Found:', rects.length);
@@ -587,18 +608,11 @@ function toggleStatus(){
     console.log('Plot Status:', p.id, p.status);
     if(showStatus){
       r.classList.add('status-colored');
-      if(p.status==='available'){
-        r.style.fill='transparent';
-        r.style.stroke='transparent';
-        r.style.fillOpacity='1';
-        r.style.strokeOpacity='1';
-      }else{
-        const color=COL[p.status]||'#6b7280';
-        r.style.fill=color;
-        r.style.stroke=color;
-        r.style.fillOpacity='0.7';
-        r.style.strokeOpacity='1';
-      }
+      const color=COL[p.status]||'#6b7280';
+      r.style.fill=color;
+      r.style.stroke=color;
+      r.style.fillOpacity='0.7';
+      r.style.strokeOpacity='1';
     }else{
       r.classList.remove('status-colored');
       r.style.fill='transparent';
